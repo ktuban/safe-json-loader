@@ -345,13 +345,6 @@ async function loadLocalJsonFile(
     maxDepth: opts.maxJsonDepth,
   });
 
-  const depth = calculateDepth(sanitized);
-  if (depth > opts.maxJsonDepth) {
-    throw new JsonLoaderError(
-      `Local JSON in ${filePath} exceeds maxJsonDepth=${opts.maxJsonDepth} (depth=${depth}).`,
-      "LOCAL_JSON_DEPTH_ERROR"
-    );
-  }
 
   const file: LoadedJsonFile = Object.freeze({
     name: path.basename(filePath),
@@ -466,11 +459,11 @@ if (isHttpUrl(inputStr)) {
     return loadRemoteIndex(inputStr, json, opts, limitRun);
   }
 
-  const file: LoadedJsonFile = Object.freeze({
-    name: new URL(inputStr).pathname,
-    data: json,
-    __source: inputStr,
-  });
+ const file: LoadedJsonFile = Object.freeze({
+  name: path.basename(new URL(inputStr).pathname),
+  data: json,
+  __source: inputStr,
+});
 
   opts.onFileLoaded(file);
   logWith(opts, "info", "Remote JSON file loaded", { url: inputStr });
@@ -510,4 +503,57 @@ if (isHttpUrl(inputStr)) {
     `Unsupported path type: ${resolved}`,
     "LOCAL_PATH_TYPE_ERROR"
   );
+}
+
+/**
+ * Safely parse and sanitize a JSON string.
+ *
+ * - Parses JSON with error handling
+ * - Strips prototype pollution keys (__proto__, constructor, prototype)
+ * - Enforces max depth
+ *
+ * @param input Raw JSON string
+ * @param opts  Loader options (maxJsonDepth, etc.)
+ * @returns Safe, sanitized JSON object
+ */
+export function parseSafeJsonString(
+  input: string,
+  opts?: Pick<SafeJsonLoaderOptions, "maxJsonDepth">
+): JsonValue {
+  let raw: any;
+  try {
+    raw = JSON.parse(input);
+  } catch (err: any) {
+    throw new JsonLoaderError(
+      `Invalid JSON string: ${err?.message ?? String(err)}`,
+      "STRING_JSON_PARSE_ERROR"
+    );
+  }
+
+  const sanitized = sanitizePrototypePollution(raw, {
+    maxDepth: opts?.maxJsonDepth ?? 50,
+  });
+
+  return sanitized;
+}
+
+/**
+ * Sanitize an already-parsed JSON object.
+ *
+ * - Strips prototype pollution keys (__proto__, constructor, prototype)
+ * - Enforces max depth
+ *
+ * @param input Parsed JSON object (e.g. req.body in Express)
+ * @param opts  Loader options (maxJsonDepth, etc.)
+ * @returns Safe, sanitized JSON object
+ */
+export function sanitizeParsedJsonObject(
+  input: JsonValue,
+  opts?: Pick<SafeJsonLoaderOptions, "maxJsonDepth">
+): JsonValue {
+  const sanitized = sanitizePrototypePollution(input, {
+    maxDepth: opts?.maxJsonDepth ?? 50,
+  });
+
+  return sanitized;
 }

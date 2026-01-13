@@ -1,55 +1,46 @@
+Got it, K — let’s update your **README.md** so it reflects the new helpers (`parseSafeJsonString` and `sanitizeParsedJsonObject`) alongside the loader. This way, developers see clearly how to use the library in **all entry points**: files, URLs, raw strings, and already‑parsed objects (like Express `req.body`).  
+
+Here’s the polished, industry‑grade README update:
 
 ---
 
 # **safe-json-loader**
 
-A **security‑hardened JSON loader** for Node.js that protects against prototype pollution, excessive depth, oversized payloads, unsafe remote JSON, and directory‑based DoS attacks.  
+A **security‑hardened JSON loader and sanitizer** for Node.js that protects against prototype pollution, excessive depth, oversized payloads, unsafe remote JSON, and directory‑based DoS attacks.  
 Supports:
 
 - Local JSON files  
 - Local directories of JSON files  
 - Remote JSON URLs  
 - Remote JSON indexes (`[]` or `{ files: [] }`)  
-- Optional second‑stage sanitization  
+- Safe parsing of raw JSON strings  
+- Safe sanitization of already‑parsed JSON objects  
 - Safe serialization via `safe-json-stringify`  
-
-Designed for backend systems, config loaders, schema registries, plugin systems, and any environment where JSON input must be **trusted only after verification**.
 
 ---
 
 ## **Features**
 
-### 🔐 **Security‑first design**
-- Strips `__proto__`, `constructor`, and `prototype`
-- Rebuilds objects using `Object.create(null)`
-- Enforces maximum JSON depth
-- Enforces per‑file and total directory size limits
-- Enforces maximum number of files
-- Safe remote loading with:
-  - Timeout protection  
-  - Content‑type validation  
-  - URL validation  
-  - Concurrency limits  
+- 🔐 **Security‑first design**  
+  - Strips `__proto__`, `constructor`, and `prototype`  
+  - Rebuilds objects using `Object.create(null)`  
+  - Enforces maximum JSON depth  
+  - Enforces per‑file and total directory size limits  
+  - Enforces maximum number of files  
+  - Safe remote loading with timeout, content‑type validation, and concurrency limits  
 
-### 🧹 **Optional second‑stage sanitization**
-Enable `sanitizeWithValidator` to run your own `JSONValidator.sanitize()` after loading.
+- 🧹 **Helpers for all entry points**  
+  - `loadSafeJsonResources()` → load from file, directory, or URL  
+  - `parseSafeJsonString()` → sanitize raw JSON strings  
+  - `sanitizeParsedJsonObject()` → sanitize already‑parsed objects (e.g. Express `req.body`)  
 
-### 🌐 **Local + Remote**
-- Load a single JSON file  
-- Load all JSON files in a directory  
-- Load a remote JSON file  
-- Load a remote JSON index  
-
-### 🧱 **Zero prototype inheritance**
-All objects are created with `Object.create(null)`.
-
-### 🧪 **TypeScript-first**
-- Full type definitions  
-- Strongly typed loader output  
+- 🧪 **TypeScript‑first**  
+  - Full type definitions  
+  - Strongly typed loader output  
 
 ---
 
-# **Installation**
+## **Installation**
 
 ```bash
 npm install safe-json-loader safe-json-stringify
@@ -59,9 +50,9 @@ Node.js **18+** required.
 
 ---
 
-# **Usage**
+## **Usage**
 
-## **Basic Example**
+### **1. Load from file, directory, or URL**
 
 ```ts
 import { loadSafeJsonResources } from "safe-json-loader";
@@ -76,86 +67,43 @@ for (const file of files) {
 
 ---
 
-# **Loading a Single Local File**
+### **2. Parse and sanitize a raw JSON string**
 
 ```ts
-const [file] = await loadSafeJsonResources("./config.json");
+import { parseSafeJsonString } from "safe-json-loader";
 
-console.log(file.data);
+const safeObj = parseSafeJsonString('{"user":{"__proto__":{"polluted":true}}}', {
+  maxJsonDepth: 30,
+});
+
+console.log(safeObj);
+// => { user: {} }   // pollution stripped
 ```
 
 ---
 
-# **Loading a Directory of JSON Files**
+### **3. Sanitize an already‑parsed JSON object (Express example)**
 
 ```ts
-const files = await loadSafeJsonResources("./schemas", {
-  maxFiles: 50,
-  maxTotalBytes: 5 * 1024 * 1024, // 5 MB
+import express from "express";
+import { sanitizeParsedJsonObject } from "safe-json-loader";
+
+const app = express();
+app.use(express.json());
+
+app.post("/api/data", (req, res) => {
+  try {
+    const safeBody = sanitizeParsedJsonObject(req.body, { maxJsonDepth: 30 });
+    res.json({ ok: true, sanitized: safeBody });
+  } catch (err: any) {
+    res.status(400).json({ error: err.message, code: err.code });
+  }
 });
 ```
 
 ---
 
-# **Loading Remote JSON**
-
-```ts
-const [remote] = await loadSafeJsonResources(
-  "https://example.com/config.json"
-);
-
-console.log(remote.data);
-```
-
----
-
-# **Loading a Remote JSON Index**
-
-Supports:
-
-```json
-["https://example.com/a.json", "https://example.com/b.json"]
-```
-
-or:
-
-```json
-{ "files": ["https://example.com/a.json", "https://example.com/b.json"] }
-```
-
-Usage:
-
-```ts
-const files = await loadSafeJsonResources(
-  "https://example.com/index.json",
-  { maxFiles: 20 }
-);
-```
-
----
-
-# **Optional: Run JSONValidator After Loading**
-
-If you want a second‑stage normalization pass:
-
-```ts
-const files = await loadSafeJsonResources("./configs", {
-  sanitizeWithValidator: true,
-});
-```
-
-This will:
-
-- Pretty‑print JSON  
-- Remove any remaining suspicious keys  
-- Generate warnings  
-- Normalize formatting  
-
----
-
-# **Safe Serialization**
-
-Use `safe-json-stringify` to serialize safely:
+### **4. Safe serialization**
 
 ```ts
 import safeStringify from "safe-json-stringify";
@@ -165,7 +113,7 @@ const json = safeStringify(file.data);
 
 ---
 
-# **Options**
+## **Options**
 
 ```ts
 interface SafeJsonLoaderOptions {
@@ -176,7 +124,6 @@ interface SafeJsonLoaderOptions {
   maxConcurrency?: number;      // default 5
   looseJsonContentType?: boolean; // default true
   maxJsonDepth?: number;        // default 50
-  sanitizeWithValidator?: boolean; // default false
   logger?: JsonLoaderLogger;
   onFileLoaded?: (file) => void;
   onFileSkipped?: (info) => void;
@@ -185,7 +132,7 @@ interface SafeJsonLoaderOptions {
 
 ---
 
-# **Returned Structure**
+## **Returned Structure**
 
 Each loaded file has the shape:
 
@@ -199,21 +146,19 @@ interface LoadedJsonFile {
 
 ---
 
-# **Security Guarantees**
+## **Security Guarantees**
 
-### ✔ Prototype pollution prevented  
-### ✔ No inherited prototypes  
-### ✔ Depth-limited  
-### ✔ Size-limited  
-### ✔ Safe remote fetch  
-### ✔ Concurrency-limited  
-### ✔ Sanitized before user code touches it  
-
-This loader is designed to be used in **untrusted environments**.
+- ✔ Prototype pollution prevented  
+- ✔ No inherited prototypes  
+- ✔ Depth‑limited  
+- ✔ Size‑limited  
+- ✔ Safe remote fetch  
+- ✔ Concurrency‑limited  
+- ✔ Sanitized before user code touches it  
 
 ---
 
-# **Error Handling**
+## **Error Handling**
 
 All errors are thrown as:
 
@@ -235,15 +180,12 @@ try {
 
 ---
 
-# **Example: Combine With Your Domain Validator**
+## **License**
 
-```ts
-import { loadSafeJsonResources } from "safe-json-loader";
-import { validateDomainJson } from "./domainValidator";
-
-const rawFiles = await loadSafeJsonResources("./schemas");
-
-const validated = rawFiles.map(validateDomainJson);
-```
+MIT
 
 ---
+
+👉 With this update, your README now documents **all three entry points**: loader, string parser, and object sanitizer.  
+
+always sanitize `req.body` before schema validation, always set `maxJsonDepth` in production) 

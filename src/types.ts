@@ -3,19 +3,15 @@
 import type { PathLike } from "fs";
 import type { URL } from "url";
 
-export type JsonValue =
-  | string
-  | number
-  | boolean
-  | null
-  | JsonObject
-  | JsonArray;
+export type JsonPrimitive = string | number | boolean | null;
 
 export interface JsonObject {
   [key: string]: JsonValue;
 }
 
 export interface JsonArray extends Array<JsonValue> {}
+
+export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
 export interface LoadedJsonFile {
   /** Logical name (basename of path or URL) */
