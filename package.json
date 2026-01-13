@@ -1,0 +1,78 @@
+{
+  "name": "@ktuban/safe-json-loader",
+  "version": "1.0.0",
+  "description": "A security‑hardened JSON loader with prototype‑pollution protection, depth limits, safe parsing, and optional validation layers.",
+  "keywords": [
+    "json",
+    "loader",
+    "security",
+    "prototype-pollution",
+    "sanitization",
+    "safe-parse",
+    "validation",
+    "backend",
+    "nodejs",
+    "library"
+  ],
+  "license": "MIT",
+  "author": {
+    "name": "K",
+    "url": "https://github.com/ktuban"
+  },
+  "private": false,
+  "type": "module",
+  "main": "dist/cjs/index.js",
+  "module": "dist/esm/index.js",
+  "types": "dist/types/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/esm/index.js",
+      "require": "./dist/cjs/index.js",
+      "types": "./dist/types/index.d.ts"
+    }
+  },
+  "files": [
+    "dist/**/*",
+    "LICENSE",
+    "README.md"
+  ],
+  "sideEffects": false,
+  "engines": {
+    "node": ">=18"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/ktuban/safe-json-loader.git"
+  },
+  "bugs": {
+    "url": "https://github.com/ktuban/safe-json-loader/issues"
+  },
+  "homepage": "https://github.com/ktuban/safe-json-loader#readme",
+  "scripts": {
+    "clean": "rimraf dist",
+    "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
+    "build:esm": "tsc --project tsconfig.json --outDir dist/esm --module ES2022",
+    "build:cjs": "tsc --project tsconfig.json --outDir dist/cjs --module CommonJS --declaration false",
+    "build:types": "tsc --project tsconfig.types.json --emitDeclarationOnly --outDir dist/types",
+    "lint": "eslint . --ext .ts",
+    "prepare": "npm run build",
+    "test": "node ./dist/esm/test.js",
+    "start": "node ./dist/esm/index.js"
+  },
+  "dependencies": {
+    "node-fetch": "^3.3.2",
+    "safe-json-stringify":"^1.2.0"
+  },
+  "devDependencies": {
+    "@types/node": "^25.0.7",
+    "@typescript-eslint/eslint-plugin": "^8.53.0",
+    "@typescript-eslint/parser": "^8.53.0",
+    "eslint": "^9.39.2",
+    "rimraf": "^6.1.2",
+    "typescript": "^5.9.3",
+    "@types/safe-json-stringify": "^1.1.5"
+  }
+}
