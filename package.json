@@ -1,6 +1,6 @@
 {
   "name": "@ktuban/safe-json-loader",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "A security‑hardened JSON loader with prototype‑pollution protection, depth limits, safe parsing, and optional validation layers.",
   "keywords": [
     "json",
