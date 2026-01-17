@@ -3,37 +3,43 @@
 import type { PathLike } from "fs";
 import type { URL } from "url";
 
+/** JSON primitive types. */
 export type JsonPrimitive = string | number | boolean | null;
 
+/** JSON object type. */
 export interface JsonObject {
   [key: string]: JsonValue;
 }
 
+/** JSON array type. */
 export interface JsonArray extends Array<JsonValue> {}
 
+/** Any valid JSON value. */
 export type JsonValue = JsonPrimitive | JsonObject | JsonArray;
 
+/**
+ * A single loaded JSON file, with metadata.
+ */
 export interface LoadedJsonFile {
-  /** Logical name (basename of path or URL) */
+  /** Logical name (basename of path or URL). */
   name: string;
-  /** Parsed and security‑sanitized JSON data */
+  /** Parsed and security‑sanitized JSON data. */
   data: JsonValue;
-  /** Original source (absolute path or URL) */
+  /** Original source (absolute path or URL). */
   __source: string;
 }
 
 /**
- * High‑level logging categories.
- * Keeps the core loader decoupled from any concrete logging framework.
+ * Minimal logger interface used by the loader.
+ *
+ * This keeps the loader decoupled from any specific logging framework.
+ * Callers can pass console, pino, winston, @ktuban/structured-logger, etc.
  */
-export type LogLevel = "debug" | "info" | "warn" | "error";
-
-/**
- * Abstract logger interface the loader will use.
- * Callers can pass a custom implementation (winston/pino/console/etc.).
- */
-export interface JsonLoaderLogger {
-  log(level: LogLevel, message: string, meta?: Record<string, unknown>): void;
+export interface Logger {
+  debug?: (message: string, meta?: unknown) => void;
+  info?: (message: string, meta?: unknown) => void;
+  warn?: (message: string, meta?: unknown) => void;
+  error?: (message: string, meta?: unknown) => void;
 }
 
 /**
@@ -85,12 +91,11 @@ export interface SafeJsonLoaderOptions {
    */
   maxJsonDepth?: number;
 
-
   /**
    * Optional logger implementation.
-   * If omitted, a no‑op logger is used.
+   * If omitted, a default adapter to @ktuban/structured-logger is used.
    */
-  logger?: JsonLoaderLogger;
+  logger?: Logger;
 
   /**
    * Optional hook invoked after each file is successfully loaded and sanitized.
@@ -114,7 +119,7 @@ export interface ResolvedSafeJsonLoaderOptions extends SafeJsonLoaderOptions {
   maxConcurrency: number;
   looseJsonContentType: boolean;
   maxJsonDepth: number;
-  logger: JsonLoaderLogger;
+  logger: Logger;
   onFileLoaded: (file: LoadedJsonFile) => void;
   onFileSkipped: (info: { source: string; reason: string }) => void;
 }

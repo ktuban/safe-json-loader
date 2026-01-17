@@ -11,7 +11,7 @@ import {
   SafeJsonLoaderOptions,
   JsonLoadInput,
 } from "./types.js";
-import { mergeOptions, logWith } from "./logger.js";
+import { mergeOptions, log } from "./logger.js";
 
 /* -------------------------------------------------------------------------- */
 /*  ERROR TYPE                                                                */
@@ -134,6 +134,7 @@ function deepSanitize(value: any, depth: number, maxDepth: number): any {
 
 /**
  * Computes maximum depth of a JSON value.
+ * (Currently unused externally, but kept for potential diagnostics or future features.)
  */
 function calculateDepth(value: JsonValue, currentDepth = 0): number {
   if (value === null) return currentDepth;
@@ -269,7 +270,7 @@ async function loadRemoteIndex(
     );
   }
 
-  logWith(opts, "debug", "Loading remote index", {
+  log(opts, "debug", "Loading remote index", {
     indexUrl,
     fileCount: urls.length,
   });
@@ -291,9 +292,7 @@ async function loadRemoteIndex(
       });
 
       opts.onFileLoaded(file);
-      logWith(opts, "info", "Remote JSON file loaded", {
-        url: fileUrl,
-      });
+      log(opts, "info", "Remote JSON file loaded", { url: fileUrl });
 
       return file;
     })
@@ -317,7 +316,7 @@ async function loadLocalJsonFile(
       source: filePath,
       reason: `File exceeds maxFileBytes=${opts.maxFileBytes}`,
     });
-    logWith(opts, "warn", "Skipping local file due to size limit", {
+    log(opts, "warn", "Skipping local file due to size limit", {
       filePath,
       size: stats.size,
       maxFileBytes: opts.maxFileBytes,
@@ -345,7 +344,6 @@ async function loadLocalJsonFile(
     maxDepth: opts.maxJsonDepth,
   });
 
-
   const file: LoadedJsonFile = Object.freeze({
     name: path.basename(filePath),
     data: sanitized,
@@ -353,7 +351,7 @@ async function loadLocalJsonFile(
   });
 
   opts.onFileLoaded(file);
-  logWith(opts, "info", "Local JSON file loaded", { filePath });
+  log(opts, "info", "Local JSON file loaded", { filePath });
 
   return file;
 }
@@ -367,7 +365,7 @@ async function loadLocalDirectory(
   const jsonFiles = files.filter(isJsonFile);
 
   if (jsonFiles.length === 0) {
-    logWith(opts, "debug", "No JSON files found in directory", { dirPath });
+    log(opts, "debug", "No JSON files found in directory", { dirPath });
     return [];
   }
 
@@ -395,7 +393,7 @@ async function loadLocalDirectory(
     filePaths.push(full);
   }
 
-  logWith(opts, "debug", "Loading local directory", {
+  log(opts, "debug", "Loading local directory", {
     dirPath,
     fileCount: filePaths.length,
     totalSize,
@@ -447,28 +445,28 @@ export async function loadSafeJsonResources(
 
   /* ---------------------------------- REMOTE --------------------------------- */
 
-if (isHttpUrl(inputStr)) {
-  const json = await loadRemoteJson(inputStr, opts);
+  if (isHttpUrl(inputStr)) {
+    const json = await loadRemoteJson(inputStr, opts);
 
-  if (
-    Array.isArray(json) ||
-    (json &&
-      typeof json === "object" &&
-      Array.isArray((json as any).files))
-  ) {
-    return loadRemoteIndex(inputStr, json, opts, limitRun);
-  }
+    if (
+      Array.isArray(json) ||
+      (json &&
+        typeof json === "object" &&
+        Array.isArray((json as any).files))
+    ) {
+      return loadRemoteIndex(inputStr, json, opts, limitRun);
+    }
 
- const file: LoadedJsonFile = Object.freeze({
-  name: path.basename(new URL(inputStr).pathname),
-  data: json,
-  __source: inputStr,
-});
+    const file: LoadedJsonFile = Object.freeze({
+      name: path.basename(new URL(inputStr).pathname),
+      data: json,
+      __source: inputStr,
+    });
 
-  opts.onFileLoaded(file);
-  logWith(opts, "info", "Remote JSON file loaded", { url: inputStr });
+    opts.onFileLoaded(file);
+    log(opts, "info", "Remote JSON file loaded", { url: inputStr });
 
-  return [file];
+    return [file];
   }
 
   /* ----------------------------------- LOCAL ---------------------------------- */

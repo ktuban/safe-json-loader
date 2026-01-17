@@ -1,6 +1,6 @@
 {
   "name": "@ktuban/safe-json-loader",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "description": "A security‑hardened JSON loader with prototype‑pollution protection, depth limits, safe parsing, and optional validation layers.",
   "keywords": [
     "json",
@@ -16,7 +16,7 @@
   ],
   "license": "MIT",
   "author": {
-    "name": "K",
+    "name": "K Tuban",
     "url": "https://github.com/ktuban"
   },
   "private": false,
@@ -63,16 +63,17 @@
     "start": "node ./dist/esm/index.js"
   },
   "dependencies": {
+    "@ktuban/structured-logger": "^1.0.0",
     "node-fetch": "^3.3.2",
-    "safe-json-stringify":"^1.2.0"
+    "safe-json-stringify": "^1.2.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.7",
+    "@types/safe-json-stringify": "^1.1.5",
     "@typescript-eslint/eslint-plugin": "^8.53.0",
     "@typescript-eslint/parser": "^8.53.0",
     "eslint": "^9.39.2",
     "rimraf": "^6.1.2",
-    "typescript": "^5.9.3",
-    "@types/safe-json-stringify": "^1.1.5"
+    "typescript": "^5.9.3"
   }
 }

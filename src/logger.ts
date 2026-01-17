@@ -1,18 +1,36 @@
 // logger.ts
-import  stringify from "safe-json-stringify"
+
+import { StructuredLogger } from "@ktuban/structured-logger";
 import type {
-  JsonLoaderLogger,
-  LogLevel,
+  Logger,
   ResolvedSafeJsonLoaderOptions,
   SafeJsonLoaderOptions,
 } from "./types.js";
 
-const NOOP_LOGGER: JsonLoaderLogger = {
-  log: () => {
-    // no‑op
-  },
+/**
+ * Default logger instance.
+ *
+ * We rely on StructuredLogger's singleton behavior:
+ * - If the host app has already called StructuredLogger.getInstance({...}),
+ *   this will reuse that configuration.
+ * - If not, this will create a default instance with its own defaults.
+ */
+const structuredLogger = StructuredLogger.getInstance();
+
+/**
+ * Default logger adapter that maps the loader's minimal Logger interface
+ * to the StructuredLogger API.
+ */
+const DEFAULT_LOGGER: Logger = {
+  debug: (message, meta) => structuredLogger.debug(message, meta as any),
+  info: (message, meta) => structuredLogger.info(message, meta as any),
+  warn: (message, meta) => structuredLogger.warn(message, meta as any),
+  error: (message, meta) => structuredLogger.error(message, meta as any),
 };
 
+/**
+ * Default options for the safe JSON loader.
+ */
 const DEFAULT_OPTIONS: ResolvedSafeJsonLoaderOptions = {
   maxFiles: 100,
   maxTotalBytes: 10 * 1024 * 1024, // 10 MB
@@ -21,11 +39,17 @@ const DEFAULT_OPTIONS: ResolvedSafeJsonLoaderOptions = {
   maxConcurrency: 5,
   looseJsonContentType: true,
   maxJsonDepth: 50,
-  logger: NOOP_LOGGER,
+  logger: DEFAULT_LOGGER,
   onFileLoaded: () => {},
   onFileSkipped: () => {},
 };
 
+/**
+ * Merge user‑provided options with defaults.
+ *
+ * - Ensures all numeric limits are set.
+ * - Ensures logger and hooks are always defined.
+ */
 export function mergeOptions(
   opts?: SafeJsonLoaderOptions
 ): ResolvedSafeJsonLoaderOptions {
@@ -41,36 +65,17 @@ export function mergeOptions(
 }
 
 /**
- * Simple adapter to allow direct use of console as logger, if desired.
- */
-export class ConsoleJsonLoaderLogger implements JsonLoaderLogger {
-  log(level: LogLevel, message: string, meta?: Record<string, unknown>): void {
-    const payload = meta ? `${message} | ${stringify(meta)}` : message;
-    switch (level) {
-      case "debug":
-        console.debug(payload);
-        break;
-      case "info":
-        console.info(payload);
-        break;
-      case "warn":
-        console.warn(payload);
-        break;
-      case "error":
-        console.error(payload);
-        break;
-    }
-  }
-}
-
-/**
  * Helper to log with a specific log level using resolved options.
+ *
+ * This is intentionally minimal and tolerant:
+ * - If a given level is not implemented by the logger, it is silently skipped.
  */
-export function logWith(
+export function log(
   options: ResolvedSafeJsonLoaderOptions,
-  level: LogLevel,
+  level: keyof Logger,
   message: string,
-  meta?: Record<string, unknown>
+  meta?: unknown
 ): void {
-  options.logger.log(level, message, meta);
+  const fn = options.logger[level];
+  if (fn) fn(message, meta);
 }
