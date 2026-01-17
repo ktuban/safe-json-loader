@@ -1,6 +1,6 @@
 {
   "name": "@ktuban/safe-json-loader",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "A security‑hardened JSON loader with prototype‑pollution protection, depth limits, safe parsing, and optional validation layers.",
   "keywords": [
     "json",
@@ -63,7 +63,7 @@
     "start": "node ./dist/esm/index.js"
   },
   "dependencies": {
-    "@ktuban/structured-logger": "^1.0.0",
+    "@ktuban/structured-logger": "^1.1.0",
     "node-fetch": "^3.3.2",
     "safe-json-stringify": "^1.2.0"
   },

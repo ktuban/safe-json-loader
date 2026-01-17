@@ -1,8 +1,7 @@
 // logger.ts
 
-import { StructuredLogger } from "@ktuban/structured-logger";
+import { LoggerContract, StructuredLogger } from "@ktuban/structured-logger";
 import type {
-  Logger,
   ResolvedSafeJsonLoaderOptions,
   SafeJsonLoaderOptions,
 } from "./types.js";
@@ -21,7 +20,7 @@ const structuredLogger = StructuredLogger.getInstance();
  * Default logger adapter that maps the loader's minimal Logger interface
  * to the StructuredLogger API.
  */
-const DEFAULT_LOGGER: Logger = {
+const DEFAULT_LOGGER: LoggerContract = {
   debug: (message, meta) => structuredLogger.debug(message, meta as any),
   info: (message, meta) => structuredLogger.info(message, meta as any),
   warn: (message, meta) => structuredLogger.warn(message, meta as any),
@@ -72,7 +71,7 @@ export function mergeOptions(
  */
 export function log(
   options: ResolvedSafeJsonLoaderOptions,
-  level: keyof Logger,
+  level: keyof LoggerContract,
   message: string,
   meta?: unknown
 ): void {

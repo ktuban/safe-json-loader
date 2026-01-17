@@ -2,6 +2,7 @@
 
 import type { PathLike } from "fs";
 import type { URL } from "url";
+import {LoggerContract} from "@ktuban/structured-logger";
 
 /** JSON primitive types. */
 export type JsonPrimitive = string | number | boolean | null;
@@ -29,18 +30,6 @@ export interface LoadedJsonFile {
   __source: string;
 }
 
-/**
- * Minimal logger interface used by the loader.
- *
- * This keeps the loader decoupled from any specific logging framework.
- * Callers can pass console, pino, winston, @ktuban/structured-logger, etc.
- */
-export interface Logger {
-  debug?: (message: string, meta?: unknown) => void;
-  info?: (message: string, meta?: unknown) => void;
-  warn?: (message: string, meta?: unknown) => void;
-  error?: (message: string, meta?: unknown) => void;
-}
 
 /**
  * Options for safe JSON loading.
@@ -95,7 +84,7 @@ export interface SafeJsonLoaderOptions {
    * Optional logger implementation.
    * If omitted, a default adapter to @ktuban/structured-logger is used.
    */
-  logger?: Logger;
+  logger?: LoggerContract;
 
   /**
    * Optional hook invoked after each file is successfully loaded and sanitized.
@@ -119,7 +108,7 @@ export interface ResolvedSafeJsonLoaderOptions extends SafeJsonLoaderOptions {
   maxConcurrency: number;
   looseJsonContentType: boolean;
   maxJsonDepth: number;
-  logger: Logger;
+  logger: LoggerContract;
   onFileLoaded: (file: LoadedJsonFile) => void;
   onFileSkipped: (info: { source: string; reason: string }) => void;
 }
