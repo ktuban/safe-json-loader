@@ -1,6 +1,6 @@
 {
   "name": "@ktuban/safe-json-loader",
-  "version": "1.1.2",
+  "version": "1.1.3",
   "description": "A security‑hardened JSON loader with prototype‑pollution protection, depth limits, safe parsing, and optional validation layers.",
   "keywords": [
     "json",
@@ -19,7 +19,17 @@
     "name": "K Tuban",
     "url": "https://github.com/ktuban"
   },
-  "private": false,
+  "funding": [
+    {
+      "type": "paypal",
+      "url": "https://paypal.me/Khaliltuban"
+    },
+    {
+      "type": "ko-fi",
+      "url": "https://ko-fi.com/ktuban"
+    }
+  ],
+  "private":false,
   "type": "module",
   "main": "dist/cjs/index.js",
   "module": "dist/esm/index.js",
@@ -54,18 +64,17 @@
   "scripts": {
     "clean": "rimraf dist",
     "build": "npm run clean && npm run build:esm && npm run build:cjs && npm run build:types",
-    "build:esm": "tsc --project tsconfig.json --outDir dist/esm --module ES2022",
-    "build:cjs": "tsc --project tsconfig.json --outDir dist/cjs --module CommonJS --declaration false",
-    "build:types": "tsc --project tsconfig.types.json --emitDeclarationOnly --outDir dist/types",
+    "build:esm": "tsc -p tsconfig.esm.json",
+    "build:cjs": "tsc -p tsconfig.cjs.json", 
+    "build:types": "tsc -p tsconfig.types.json",
     "lint": "eslint . --ext .ts",
-    "prepare": "npm run build",
+    
     "test": "node ./dist/esm/test.js",
     "start": "node ./dist/esm/index.js"
   },
   "dependencies": {
-    "@ktuban/structured-logger": "^1.1.0",
     "node-fetch": "^3.3.2",
-    "safe-json-stringify": "^1.2.0"
+    "safe-stable-stringify": "^2.5.0"
   },
   "devDependencies": {
     "@types/node": "^25.0.7",

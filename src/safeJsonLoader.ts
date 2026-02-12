@@ -10,20 +10,65 @@ import {
   ResolvedSafeJsonLoaderOptions,
   SafeJsonLoaderOptions,
   JsonLoadInput,
+  LoggerContract,
 } from "./types.js";
-import { mergeOptions, log } from "./logger.js";
+// Inline minimal defaults and helpers so this package does not require an
+// external structured logger. Callers may pass an optional `logger` in
+// `SafeJsonLoaderOptions`; otherwise we fall back to the console.
+
+const CONSOLE_LOGGER: LoggerContract = {
+  debug: (m, meta) => console.debug(m, meta),
+  info: (m, meta) => console.info(m, meta),
+  warn: (m, meta) => console.warn(m, meta),
+  error: (m, meta) => console.error(m, meta),
+};
+
+const DEFAULT_OPTIONS: ResolvedSafeJsonLoaderOptions = {
+  maxFiles: 100,
+  maxTotalBytes: 10 * 1024 * 1024, // 10 MB
+  maxFileBytes: 2 * 1024 * 1024, // 2 MB
+  httpTimeoutMs: 8000,
+  maxConcurrency: 5,
+  looseJsonContentType: true,
+  maxJsonDepth: 50,
+  logger: CONSOLE_LOGGER,
+  onFileLoaded: () => {},
+  onFileSkipped: () => {},
+};
+
+export function mergeOptions(
+  opts?: SafeJsonLoaderOptions
+): ResolvedSafeJsonLoaderOptions {
+  const logger = opts?.logger ?? DEFAULT_OPTIONS.logger;
+
+  return {
+    ...DEFAULT_OPTIONS,
+    ...(opts ?? {}),
+    logger,
+    onFileLoaded: opts?.onFileLoaded ?? DEFAULT_OPTIONS.onFileLoaded,
+    onFileSkipped: opts?.onFileSkipped ?? DEFAULT_OPTIONS.onFileSkipped,
+  } as ResolvedSafeJsonLoaderOptions;
+}
+
+export function log(
+  options: ResolvedSafeJsonLoaderOptions,
+  level: keyof LoggerContract,
+  message: string,
+  meta?: unknown
+): void {
+  const fn = options.logger[level];
+  if (fn) fn(message, meta);
+}
+import { SafeJsonError } from "./safeJsonError.js";
 
 /* -------------------------------------------------------------------------- */
 /*  ERROR TYPE                                                                */
 /* -------------------------------------------------------------------------- */
 
-export class JsonLoaderError extends Error {
-  readonly code: string;
-
-  constructor(message: string, code: string) {
-    super(message);
+export class JsonLoaderError extends SafeJsonError {
+  constructor(message: string, code: string, statusCode?: number) {
+    super(message, code, statusCode);
     this.name = "JsonLoaderError";
-    this.code = code;
   }
 }
 

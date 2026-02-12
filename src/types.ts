@@ -2,7 +2,14 @@
 
 import type { PathLike } from "fs";
 import type { URL } from "url";
-import {LoggerContract} from "@ktuban/structured-logger";
+
+/** Minimal logger contract used by this package. */
+export interface LoggerContract {
+  debug: (message: string, meta?: unknown) => void;
+  info: (message: string, meta?: unknown) => void;
+  warn: (message: string, meta?: unknown) => void;
+  error: (message: string, meta?: unknown) => void;
+}
 
 /** JSON primitive types. */
 export type JsonPrimitive = string | number | boolean | null;
@@ -82,7 +89,7 @@ export interface SafeJsonLoaderOptions {
 
   /**
    * Optional logger implementation.
-   * If omitted, a default adapter to @ktuban/structured-logger is used.
+   * If omitted, the loader falls back to a console-based logger.
    */
   logger?: LoggerContract;
 
